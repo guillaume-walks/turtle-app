@@ -70,7 +70,7 @@ class Game {
   findCoordinates(coordToFind, list) {
     return !!list[coordToFind]
   }
-  start() {
+  run() {
     while (this.moves.length) {
       const nextStep = this.moves.shift()
       const action = this.getAction(nextStep)
@@ -88,10 +88,15 @@ class Game {
       }
       if (!this.moves.length) {
         const exitFound = this.findCoordinates(flatCurrentPos, this.exitPos)
-        exitFound && this.messages.push('exit found')
+        if (exitFound) {
+          this.messages.push('exit found')
+        } else {
+          this.messages.push('still in danger')
+        }
         break
       }
     }
+    return this.messages[0]
   }
   isOutOfBound(position, grid) {
     const xValid = position.x >= grid.x && position.x <= grid.x
@@ -142,7 +147,7 @@ class Game {
 }
 
 const g = new Game(settings[0], moves[0])
-console.log(g.start())
+console.log(g.run())
 
 
 class GridObject {
