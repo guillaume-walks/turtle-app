@@ -37,21 +37,66 @@ const moves = require('./config/moves.json')
 
 class Game {
   constructor(settings, moves) {
-    this.grid = settings.grid
-    this.currentPos = settings.startPosition
-    this.exitPos = settings.exitPosition
-    this.mines = settings.minesPositions
+    const {
+      grid,
+      startPosition,
+      exitPosition,
+      minesPositions
+    } = settings
+    this.grid = grid
+    this.currentPos = startPosition
+    this.exitPos = this.flattenCoordinates(exitPosition)
+    this.mines = this.flattenCoordinates(minesPositions)
     this.moves = moves
     this.direction = 0
     this.messages = []
   }
-
+  transfromCoord(coord) {
+    return `${coord.x},${coord.y}`
+  }
+  /**
+   * `
+   * @param {Array} coordinates - array of coordinates {x:2, y:23}
+   * @returns {Object} with position as hash value e.g ['2,23']: 1
+   */
+  flattenCoordinates(coordinates) {
+    const hash = []
+    for (const i in coordinates) {
+      const value = this.transfromCoord(coordinates[i])
+      hash[value] = 1
+    }
+    return hash
+  }
+  findCoordinates(coordToFind, list) {
+    return !!list[coordToFind]
+  }
   start() {
     while (this.moves.length) {
       const nextStep = this.moves.shift()
       const action = this.getAction(nextStep)
       action()
+      const isOutOfBound = this.isOutOfBound(this.currentPos, this.grid)
+      if (isOutOfBound) {
+        this.messages.push('is out of boundary box')
+        break
+      }
+      const flatCurrentPos = this.flattenCoordinates(this.currentPos)
+      const hitMine = this.findCoordinates(flatCurrentPos, this.mines)
+      if (hitMine) {
+        this.messages.push('hit a mine')
+        break
+      }
+      if (!this.moves.length) {
+        const exitFound = this.findCoordinates(flatCurrentPos, this.exitPos)
+        exitFound && this.messages.push('exit found')
+        break
+      }
     }
+  }
+  isOutOfBound(position, grid) {
+    const xValid = position.x >= grid.x && position.x <= grid.x
+    const yValid = position.y >= grid.y && position.y <= grid.y
+    return xValid && yValid
   }
 
   getAction(type) {
@@ -61,15 +106,10 @@ class Game {
   rotate() {
     this.direction += 90;
     if (this.direction === 360) { this.direction = 0 }
-    console.log('rotate', this.direction)
   }
   move() {
-    console.log('move')
-    // const newPostion = this.moveTo(this.direction)
     const nextPos = this.getNextPos(this.direction)
-    console.log(this.currentPos)
     this.currentPos = this.setNewPos(nextPos, this.currentPos)
-    console.log(this.currentPos)
   }
 
   setNewPos(newPos, oldPos) {
@@ -99,7 +139,6 @@ class Game {
     }
     return pos
   }
-  // moveTo
 }
 
 const g = new Game(settings[0], moves[0])
